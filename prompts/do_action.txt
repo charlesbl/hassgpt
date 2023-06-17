@@ -1,0 +1,10 @@
+Voici une liste d'actions:
+{ACTIONS}
+Parmi cette liste d'actions, quel est l'action qi correspond le plus à ce qu'a fait l'assistant ?
+L'action sera décrite sous la forme suivante:
+{
+    "id:" "doors.kitchen",
+    "action": "OPEN"
+}
+
+Ta réponse devra contenir exclusivement du JSON
