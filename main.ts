@@ -1,71 +1,79 @@
 import "https://deno.land/std@0.192.0/dotenv/load.ts";
 import { Hass } from "./hass.ts";
-import { chat, Message } from "./openai.ts";
+import { ChatOpenAI } from "https://esm.sh/langchain@0.0.104/chat_models/openai";
+import { LLMChain } from "https://esm.sh/langchain@0.0.104/chains";
+import {
+    StructuredOutputParser,
+} from "https://esm.sh/langchain@0.0.104/output_parsers";
+import {
+    ChatPromptTemplate,
+    HumanMessagePromptTemplate,
+    SystemMessagePromptTemplate,
+} from "https://esm.sh/langchain@0.0.104/prompts";
 
 const hass = new Hass();
 await hass.updateEntities();
+const userRequest = Deno.args[0];
 
-const input = prompt("Demande:");
-if (input === null) throw new Error("input null");
-let statePrompt = await Deno.readTextFile("./prompts/states.txt");
-statePrompt = statePrompt.replaceAll(
-    "{JSON_STATES}",
-    hass.exportEntityStates(),
-);
-statePrompt = statePrompt.replaceAll(
-    "{USER_QUERY}",
-    input,
-);
-console.log(statePrompt);
-
-const conversation: Message[] = [
-    {
-        role: "user",
-        content: statePrompt,
-    },
-];
-let response = await chat(conversation);
-console.log(response);
-conversation.push({
-    role: "assistant",
-    content: response,
+const chat = new ChatOpenAI({
+    modelName: "gpt-3.5-turbo",
 });
 
-// TODO déterminer si garder le is_action est utile pour trouver l'action
-const isActionPrompt = await Deno.readTextFile("./prompts/is_action.txt");
-conversation.push({
-    role: "user",
-    content: isActionPrompt,
+const stateParser = StructuredOutputParser.fromNamesAndDescriptions({
+    isAction: `Est-ce que tu as effectuer ou va effectuer une une action ? (true/false)`,
+    entity: `Quel objet veux-tu utiliser ?`,
+    state: `Quel état veux-tu pour l'objet {entity} ?`,
+    message: `Quel est le message à envoyer au client ?`,
 });
-response = await chat(conversation);
-response = response.toLocaleLowerCase().replaceAll(".", "");
-if (response.includes("oui") && !response.includes("non")) {
+const statePrompt = ChatPromptTemplate.fromPromptMessages([
+    SystemMessagePromptTemplate.fromTemplate(
+        await Deno.readTextFile("./prompts/states.txt"),
+    ),
+    HumanMessagePromptTemplate.fromTemplate("{input}"),
+]);
+const stateReponse = await new LLMChain({
+    prompt: statePrompt,
+    llm: chat,
+}).call({
+    entityStates: hass.exportEntityStates(),
+    input: userRequest,
+    parser: stateParser.getFormatInstructions(),
+});
+const action = await stateParser.parse(stateReponse.text);
+console.log(userRequest)
+console.log(action);
+console.log(action.message);
+
+if (action.isAction === "true") {
     console.log("action requise");
-    conversation.push({
-        role: "assistant",
-        content: response,
-    });
 
-    let doActionPrompt = await Deno.readTextFile("./prompts/do_action.txt");
-    doActionPrompt = doActionPrompt.replaceAll(
-        "{ACTIONS}",
-        hass.exportEntityActions(),
-    );
-    conversation.push({
-        role: "user",
-        content: doActionPrompt,
+    const doActionParser = StructuredOutputParser.fromNamesAndDescriptions({
+            id: "id de l'objet connecté à utiliser",
+            action: "action à effectuer sur l'objet",
+        } );
+    const doActionPrompt = ChatPromptTemplate.fromPromptMessages([
+        SystemMessagePromptTemplate.fromTemplate(
+            await Deno.readTextFile("./prompts/do_action.txt"),
+        ),
+    ]);
+    const doActionReponse = await new LLMChain({
+        prompt: doActionPrompt,
+        llm: chat,
+    }).call({
+        actions: hass.exportEntityActions(),
+        userRequest: userRequest,
+        assistantResponse: action.message,
+        parser: doActionParser.getFormatInstructions(),
     });
-    response = await chat(conversation);
-    const json = JSON.parse(response);
-    const entity = hass.entities.find((e) => e.id === json.id);
-    if (entity === undefined) throw new Error(`entity ${json.id} not found`);
-    const action = entity.actions.find((a) => a.id === json.action);
-    if (action === undefined) {
-        throw new Error(`action ${json.action} not found`);
+    const doAction = await doActionParser.parse(doActionReponse.text);
+    console.log(doAction);
+    const entity = hass.entities.find((e) => e.id === doAction.id);
+    if (entity === undefined) throw new Error(`entity ${doAction.id} not found`);
+    const entityAction = entity.actions.find((a) => a.id === doAction.action);
+    if (entityAction === undefined) {
+        throw new Error(`action ${doAction.action} not found`);
     }
-    action.execution();
-} else if (!response.includes("oui") && response.includes("non")) {
-    console.log("pas d'action requise");
+    entityAction.execution();
 } else {
-    throw new Error(`is_action response incorrect: \n${response}`);
+    console.log("pas d'action requise");
 }

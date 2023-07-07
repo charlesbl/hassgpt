@@ -2,7 +2,6 @@ import { Entity, watchedEntities } from "./entities.ts";
 
 const HASS_API_KEY = Deno.env.get("HASS_API_KEY")!;
 const HASS_URL = Deno.env.get("HASS_URL")!;
-console.log(HASS_URL);
 
 interface State {
     entity_id: string;

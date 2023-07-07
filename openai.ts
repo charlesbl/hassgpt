@@ -1,8 +1,8 @@
 import { OpenAI } from "https://deno.land/x/openai@1.4.0/mod.ts";
 
-const OPEN_AI_KEY = Deno.env.get("OPEN_AI_KEY")!;
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
 
-const openAI = new OpenAI(OPEN_AI_KEY);
+const openAI = new OpenAI(OPENAI_API_KEY);
 
 export interface Message {
     name?: string;
