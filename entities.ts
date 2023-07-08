@@ -1,3 +1,5 @@
+import { Hass } from "./hass.ts";
+
 export class Entity {
     constructor(
         readonly id: string,
@@ -11,7 +13,7 @@ export class Entity {
 export interface Action {
     id: string;
     description: string;
-    execution: () => void;
+    execution: (hass: Hass) => Promise<string>;
 }
 
 export interface WatchedEntity {
@@ -48,14 +50,19 @@ export const watchedEntities: WatchedEntity[] = [
         id: "light.texas_instruments_cc1352_cc2652_z_stack_3_30_build_20210708_lights_zha_group_0x0002",
         actions: [
             {
-                id: "TURN_ON",
-                description: "Allume la lumière",
-                execution: () => console.log("Turn on light"),
+                id: "turn_on",
+                description: "Turn on the light",
+                execution: (hass: Hass) => hass.changeLightState("light.texas_instruments_cc1352_cc2652_z_stack_3_30_build_20210708_lights_zha_group_0x0002", "turn_on"),
             },
             {
-                id: "TURN_OFF",
-                description: "Eteins la lumière",
-                execution: () => console.log("Turn off light"),
+                id: "turn_off",
+                description: "Turn off the light",
+                execution: (hass: Hass) => hass.changeLightState("light.texas_instruments_cc1352_cc2652_z_stack_3_30_build_20210708_lights_zha_group_0x0002", "turn_off"),
+            },
+            {
+                id: "toggle",
+                description: "Toggle the light",
+                execution: async () => "toggle is not implemented yet but you can use turn_on or turn_off but you need to know the current state of the light",
             },
         ],
     },

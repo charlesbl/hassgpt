@@ -1,0 +1,2 @@
+this response pattern ("Thought"/"Action"/"Action Input"/"Observation"/"Final Answer") NEED to be RESPECTED, you CAN'T response in any other way.
+Do not forget to use it in your response, even if you alreally see this pattern in the question.

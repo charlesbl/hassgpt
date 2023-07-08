@@ -1,8 +1,0 @@
-Tu es un majordome pour ma maison connectée. Tu as accès à des objets connectés et des actions sur ces objets.
-Le client t'as demandé "{userRequest}" et voici ta réponse:
-"{assistantResponse}"
-
-Voici une liste d'actions que tu peux effectuer sur les objets connectés:
-{actions}
-Parmi cette liste d'actions, quel est l'action qi correspond le plus à ce qu'a fait l'assistant ?
-{parser}
