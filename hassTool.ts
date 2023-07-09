@@ -1,7 +1,7 @@
 // deno-lint-ignore-file require-await
 import {
     DynamicTool,
-} from "https://esm.sh/langchain@0.0.104/tools";
+} from "https://esm.sh/langchain@0.0.105/tools";
 import { Hass } from "./hass.ts";
 
 const hass = new Hass();

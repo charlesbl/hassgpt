@@ -84,7 +84,10 @@ export class Hass {
             },
         );
         if (setStateResponse.status === 200) {
-            return `Here is the list of entities that changed state: ${
+            const changedEntities = await setStateResponse.json();
+            if(changedEntities.length === 0) return "Light didn't change state";
+            if(changedEntities.filter((e: any) => e.entity_id === entity.id).length === 1) return `Light is now ${action}`;
+            return `${entity.id} didn't change state. Here is the list of entities that changed state: ${
                 JSON.stringify(await setStateResponse.json())
             }`;
         } else return "An error occured";

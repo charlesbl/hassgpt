@@ -62,7 +62,7 @@ export const watchedEntities: WatchedEntity[] = [
             {
                 id: "toggle",
                 description: "Toggle the light",
-                execution: async () => "toggle is not implemented yet but you can use turn_on or turn_off but you need to know the current state of the light",
+                execution: async () => "to toggle the light you need to use the turn_on if the light is off, and turn_off if the light is on",
             },
         ],
     },
