@@ -1,7 +1,7 @@
 // deno-lint-ignore-file require-await
 import {
     DynamicTool,
-} from "https://esm.sh/langchain@0.0.105/tools";
+} from "https://esm.sh/langchain@0.0.110/tools";
 import { Hass } from "./hass.ts";
 
 const hass = new Hass();
@@ -16,7 +16,11 @@ const hassTools = [
         name: "hass-get-state",
         description:
             "Retrieve the state of a connected object in your house. input is a string of the id of the object you want to retrieve",
-        func: async (entityId) => (await hass.getEntityStates(entityId)).state,
+        func: async (entityId: string) => {
+            const state = await hass.getEntityStates(entityId);
+            if(typeof state === "string") return state;
+            return state.state;
+        },
     }),
     new DynamicTool({
         name: "hass-get-actions",
